@@ -204,7 +204,7 @@ void thread_ADC_Function(void *param)
                 if (data_rate_pair)
                 {
                     sensor_1_data[counter + 1] = (sensor_1_data[counter + 1] + temp_data) / 2;
-                    sensor_1_data[counter + 1] = (sensor_1_data[counter + 1] / MAX_VALUE) * 5000;
+                    sensor_1_data[counter + 1] = (sensor_1_data[counter + 1] / MAX_VALUE) * 2048;
                     data_rate_pair = false;
                     WITH_LOCK(Serial)
                     {
@@ -624,8 +624,8 @@ void setup() {
     // Start the ADC122U04 chip UART
     // start_excited_ain3_input_ain2();
     adc_setup();
-    // start_excited_ain3_input_ain2();
-    start_input_ain2_external_ref();
+    start_excited_ain3_input_ain2();
+    // start_input_ain2_external_ref();
     // new Thread("ADCManagerThread", thread_ADC_manager_Function);
 }
 
