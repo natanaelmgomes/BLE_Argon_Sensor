@@ -45,8 +45,11 @@ char buf[300];
 /* Data from ADC */
 float sensor_1_data[DATA_LEN + 1] = {0.0, 0.0, 0.0, 0.0};
 
+/* Data from ADC */
+float sensor_temp_data[DATA_LEN + 1] = {0.0, 0.0, 0.0, 0.0};
+
 /* Data send over BLE */
-float ble_data[DATA_LEN + 1] = {0.0, 0.0, 0.0, 0.0};
+float ble_data[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 /* Counter for data */
 uint8_t counter = 0;
@@ -204,11 +207,14 @@ void thread_ADC_Function(void *param)
                 if (data_rate_pair)
                 {
                     sensor_1_data[counter + 1] = (sensor_1_data[counter + 1] + temp_data) / 2;
-                    sensor_1_data[counter + 1] = (sensor_1_data[counter + 1] / MAX_VALUE) * 5000;
+                    sensor_1_data[counter + 1] = (sensor_1_data[counter + 1] / MAX_VALUE) * 5000.0;
+                    int val =  analogRead(A5);
+                    sensor_temp_data[counter + 1] = ((float) val / 4096.0) * 5000.0;
                     data_rate_pair = false;
                     WITH_LOCK(Serial)
                     {
-                        Log.info("Received[%d]: %.6f", c++, sensor_1_data[counter + 1]);
+                        Log.info("Received[%d]: %.6f", ++c, sensor_1_data[counter + 1]);
+                        Log.info("Temperature[%d]: %.6f", c, sensor_temp_data[counter + 1]);
                     }
                     counter++;
                     if (counter >= DATA_LEN)
@@ -267,9 +273,20 @@ void thread_BLE_Function(void *param)
         // Log.info("test");
         if (BLE.connected() && data_ready)
         {
-            sensor_1_data[0] = sensor_1_data[0] + 1.0;
+            int i=0;
+            ble_data[i] = ble_data[i] + 1.0;
+            i++;
+            ble_data[i] = sensor_1_data[i];
+            ble_data[i+3] = sensor_temp_data[i];
+            i++;
+            ble_data[i] = sensor_1_data[i];
+            ble_data[i+3] = sensor_temp_data[i];
+            i++;
+            ble_data[i] = sensor_1_data[i];
+            ble_data[i+3] = sensor_temp_data[i];
+            // sensor_1_data[0] = sensor_1_data[0] + 1.0;
             lastTime = millis();
-            flowMeasurementCharacteristic.setValue(sensor_1_data);
+            flowMeasurementCharacteristic.setValue(ble_data);
             // Log.info("sent data");
             // snprintf(buf, sizeof(buf), "BLE update time: %.1f", (float) (millis() - lastTime));
             // Log.info(buf);
